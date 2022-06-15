@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Concatenate, Embedding, Flatten
-
+import numpy as np
 
 class CnnSentenceClassificator(tf.keras.Model):
     """
@@ -138,24 +138,8 @@ def main_CNN_classification(input_data_train, input_data_test, embedding_dimensi
               f'Test Accuracy: {test_accuracy.result() * 100}')
 
 
+# %%
 if __name__ == '__main__':
-    from random import choice
+    from tensorflow.keras.datasets import imdb
+    (x_train, y_train), (x_test, y_test) = imdb.load_data()
 
-    (training_set_seq, training_set_labels) = [tf.random.normal(shape=(1, 50), mean=10.0, stddev=0.5) for _ in range(1000)], \
-                                              [choice([tf.constant([1], shape=(1,)), tf.constant([2], shape=(1,))]) for
-                                               _ in range(1000)]
-    (test_set_seq, test_set_labels) = [tf.random.normal(shape=(1, 50), mean=10.0, stddev=1.0) for _ in range(100)], \
-                                      [choice([tf.constant([1], shape=(1,)), tf.constant([2], shape=(1,))]) for _ in
-                                       range(100)]
-
-    train_ds = tf.data.Dataset.from_tensor_slices((training_set_seq, training_set_labels))
-    test_ds = tf.data.Dataset.from_tensor_slices((test_set_seq, test_set_labels))
-
-    main_CNN_classification(input_data_train=train_ds,
-                            input_data_test=test_ds,
-                            embedding_dimension=128,
-                            number_of_outputs=2,
-                            seq_max_len=50,
-                            target_embedding=None,
-                            context_embbeding=None,
-                            epochs=10)
