@@ -75,16 +75,58 @@ class VocabBuilder(object):
         return m_coocurrencias
 
 
-# %%
-if __name__ == "__main__":
-    # Ejemplo de Shakespeare
-    os.chdir("..")
-    os.chdir("..")
-    directory = os.getcwd()
-    path_to_file = 'C:/Users/sfino/OneDrive/Documents/Melius/Salud-NLP/NLP with TensorFlow/JAMPI_UNION/jampi_flask/jampi_ia/data/clinica_primavera_skip-grams_freq.txt'
-    # path_to_file = directory + '/jampi_ia/data/clinica_primavera_skip-grams_w2v.txt'
+def remove_caps_punct(text: str):
+    """
+    Removes capital letters and punctuation from a textline
+    """
+    text_nopunct = text.translate(str.maketrans('', '', string.punctuation))
+    clean_text = [word.lower() for word in text_nopunct.split()]
+    return ' '.join(clean_text)
 
-    vb = VocabBuilder(path_file=path_to_file,
-                      window_size=5,
-                      vocab_size=3500)
-    matriz = vb.build_matriz_coocurrencias()
+
+class DataCleaning(object):
+    """
+    Class Description
+    """
+    def __init__(self, path_text: str, stop_words: list, path_output_file: str):
+        """
+        Constructor
+        :param path_text:
+        :param stop_words:
+        :param path_output_file:
+        """
+        self.text = path_text
+        self.stop_words = stop_words
+        self.output_file = path_output_file
+
+    def remove_stop_words(self, line: str):
+        """
+        Drops the stop words out of a str line
+        :param line:
+        :returns:
+        """
+        no_stopwords = [word for word in line.split() if word not in self.stop_words]
+        return ' '.join(no_stopwords)
+
+    def clean_file(self):
+        # Reading the input file
+        with open(self.text, 'r') as file:
+            lines = file.read().splitlines()
+            no_caps = map(remove_caps_punct, lines)
+            no_stopwords = map(self.remove_stop_words, no_caps)
+
+        # Writting the clean file
+        with open(self.output_file, 'w') as r:
+            r.write('\n'.join(no_stopwords))
+
+
+if __name__ == "__main__":
+    path = 'C:/Users/sfino/OneDrive/Documents/Data Science/NLP/Sentiment_analysis/data/'
+    input_file = path + 'dicc_ingles.txt'
+    output_file = path + 'CleanEnglishDict.txt'
+    s_words = []
+
+    dc = DataCleaning(path_text=input_file,
+                      stop_words=s_words,
+                      path_output_file=output_file)
+

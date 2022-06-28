@@ -1,0 +1,88 @@
+from LevenshteinModule import SimilarityMatcher
+
+import pandas as pd
+
+import re
+import string
+from nltk import word_tokenize#, WordNetLemmatizer
+from unidecode import unidecode
+
+
+def remove_punct(text):
+    text_nopunct = ''
+    text_nopunct = re.sub('['+string.punctuation+']', '', text)
+    return text_nopunct
+
+def lower_token(tokens): 
+    return [w.lower() for w in tokens]  
+
+
+class Clean(object):
+    def __init__(self, csv_file, stop_words_file,file_list ):
+        self.csv_file = csv_file
+        self.stop_words_file = stop_words_file
+        self.file_list = file_list
+        
+    def remove_stop_words(self, tokens): 
+        return [word for word in tokens if word not in self.sw]
+
+
+    def lectura(self):
+        self.df = pd.read_csv(self.csv_file, sep=';') 
+
+        # STOP WORDS
+        stop_words = []
+        with open(self.stop_words_file, 'r', encoding='latin-1') as f:
+            lines = f.read().splitlines()
+            stop_words.append(lines)
+        self.sw = stop_words[0]    
+        
+        self.df['Text_Clean'] = self.df['Texto'].apply(lambda x: remove_punct(x))
+        self.df['Text_Clean'] = self.df['Text_Clean'].apply(unidecode)
+        self.df['Text_Clean'] = self.df['Text_Clean'].str.lower()
+        self.df['Text_Clean'] = self.df['Text_Clean'].str.replace('\d+', ' ')
+        
+        self.leve = SimilarityMatcher(dictionary=self.file_list, df_raw_text= self.df)
+        self.df['errors'], self.df['corrections'] = self.leve.mistake_finder(2)
+                                                     
+        tokens = [word_tokenize(sen) for sen in self.df.Text_Clean] 
+        lower_tokens = [lower_token(token) for token in tokens]
+        filtered_words = [self.remove_stop_words(sen) for sen in lower_tokens] 
+        
+        result = [' '.join(sen) for sen in filtered_words]
+        
+        self.df['Text_Final'] = result
+        self.df['tokens'] = filtered_words 
+
+        data = self.df[['Text_Final', 'errors', 'corrections', 'tokens']]
+        return data, self.leve
+        
+        
+#%%
+if __name__ == '__main__':
+    import os
+    #español
+    # directory = os.getcwd()
+    # path = directory 
+
+    # csv_file = path + "\dicc\ejemplo.csv"
+    # stop_words_file = path + "\dicc\Stop_words_spanish.txt"
+    # file_list= ['dicc/cum.txt', 'dicc/cup.txt', 'dicc/diag.txt', 'dicc/0_palabras_todas.txt', 'dicc/nombres-propios-es.txt']
+    
+    # limpieza =  Clean(csv_file, stop_words_file, file_list)
+    # data, leve = limpieza.lectura()
+    
+    # Close_w= leve.calcDictDistance("traum", 10, leve.lines)
+    
+#%%    
+    directory = os.getcwd()
+    path = directory 
+
+    csv_file = path + "\dicc\SpellingErrorText_small.csv"
+    stop_words_file = path + "\IMBD\Stop_words_English.txt"
+    file_list= ['dicc/dicc_ingles.txt', "IMBD\Stop_words_English.txt"]
+    
+    limpieza =  Clean(csv_file, stop_words_file, file_list)
+    data, leve = limpieza.lectura()
+#%%    
+    Close_w= leve.calcDictDistance("lovedd", 10, leve.lines)

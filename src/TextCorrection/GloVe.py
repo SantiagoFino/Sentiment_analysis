@@ -68,8 +68,7 @@ class GloVe(tf.keras.Model):
         return perdida
 
 
-def main_GloVe(path_file, window_size, vocab_size, target_words, context_words, iteraciones=4000,
-               target_unico=False, peso_por_longitud=False):
+def main_GloVe(path_file, window_size, vocab_size, iteraciones=2000):
     """
     DOCUMENTACION
     Args:
@@ -77,10 +76,6 @@ def main_GloVe(path_file, window_size, vocab_size, target_words, context_words, 
         window_size: tamano de la ventana del contexto
         vocab_size: numero de palabras en el vocabulario
         iteraciones: int, cantidad de iteraciones que realizara el optimizador
-        target_words:
-        context_words:
-        target_unico:
-        peso_por_longitud:
     Returns:
         target_weights, context_weights, t_bias, c_bias, inverse_vocab, perdidas
     """
@@ -115,7 +110,7 @@ def main_GloVe(path_file, window_size, vocab_size, target_words, context_words, 
     target_weights = np.array(glove.trainable_weights[0])
     context_weights = np.array(glove.trainable_weights[1])
 
-    return inverse_vocab, target_weights, context_weights
+    return inverse_vocab, target_weights, context_weights, perdidas
 
 
 if __name__ == "__main__":
