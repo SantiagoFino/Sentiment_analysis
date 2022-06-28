@@ -72,33 +72,6 @@ class SimilarityMatcher(object):
         self.mistakes_data_frame['mistakes'] = mistakes
         self.mistakes_data_frame['exists_mistake'] = indicator
 
-    def mitake_finder(self, n=5):
-        """
-        Find the words of the text that does not match with any of the dictionary words
-        """
-        print("...Finding Mistakes...")
-        self.lines = set(self.lectura_dicc())
-        self.raw_text['errors'] = self.raw_text['Text_Clean'].applymap(lambda x: list(set(x.split()) - self.lines))
-        print("...Finding corrections...")
-        self.raw_text['corrections'] = self.raw_text['errors'].apply(lambda x: self.top_similar_words_by_Levenshtein(x, n))
-        self.raw_text['context'] = self.raw_text.apply(lambda x: self.contextos(x) if len(x['errors']) > 0 else [],
-                                                       axis=1)
-
-    def contextos(self, x):
-        Lista_contextos = []
-        for e in x['errors']:
-            # breakpoint()
-            if (x['Text_Clean'].partition(e)[0] != '') & (x['Text_Clean'].partition(e)[2] != ''):
-                l = [x['Text_Clean'].partition(e)[0].split()[-1], x['Text_Clean'].partition(e)[2].split()[0]]
-            elif x['Text_Clean'].partition(e)[0] != '':
-                l = [x['Text_Clean'].partition(e)[0].split()[-1], '']
-            elif x['Text_Clean'].partition(e)[2] != '':
-                l = ['', x['Text_Clean'].partition(e)[2].split()[0]]
-            else:
-                l = ['', '']
-            Lista_contextos.append(l)
-        return Lista_contextos
-
     def generate_mistake_context(self, window_size: int):
         """
         Computes the contexts of each one of the mistakes found in the text
@@ -168,34 +141,28 @@ class SimilarityMatcher(object):
 
 
 def analize_text(dictionary: list, path_raw_text: str, inverse_vocab: list, target_embedding, context_embedding,
-                 embedding_before_lev=False, window_size=1):
-    if embedding_before_lev:
-        pass
-    else:
-        sm = SimilarityMatcher(dictionary=dictionary,
-                               path_raw_text=path_raw_text,
-                               inverse_vocab=inverse_vocab,
-                               target_embedding=target_embedding,
-                               context_embedding=context_embedding)
+                 window_size=1):
 
-        # Finds the mistakes of the input text
-        sm.mistake_finder()
-
-        # Finds the contexts and the possible corrections of each one of the mistakes
-        contexts = sm.generate_mistake_context(window_size=window_size)
-        candidates = sm.generate_candidates_from_word_dict(num_candidates=3)
-        line_corrections = []
-        for line in contexts:
-            corrections = []
-            for mistake in line:
-                context = line[mistake]
-                candidate = list(candidates[mistake].keys())
-                correct_word = sm.mean_probabilities(candidate, context)
-                corrections.append(correct_word)
-            line_corrections.append(corrections)
-        sm.mistake_finder()
-        sm.mistakes_data_frame['corrections'] = pd.Series(line_corrections)
-        return sm.mistakes_data_frame
+    sm = SimilarityMatcher(dictionary=dictionary,
+                           path_raw_text=path_raw_text,
+                           inverse_vocab=inverse_vocab,
+                           target_embedding=target_embedding,
+                           context_embedding=context_embedding)
+    # Finds the contexts and the possible corrections of each one of the mistakes
+    contexts = sm.generate_mistake_context(window_size=window_size)
+    candidates = sm.generate_candidates_from_word_dict(num_candidates=3)
+    line_corrections = []
+    for line in contexts:
+        corrections = []
+        for mistake in line:
+            context = line[mistake]
+            candidate = list(candidates[mistake].keys())
+            correct_word = sm.mean_probabilities(candidate, context)
+            corrections.append(correct_word)
+        line_corrections.append(corrections)
+    sm.mistake_finder()
+    sm.mistakes_data_frame['corrections'] = pd.Series(line_corrections)
+    return sm.mistakes_data_frame
 
 
 # %%
